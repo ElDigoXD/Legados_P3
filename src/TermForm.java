@@ -3,11 +3,12 @@ import s3270.Wrapper;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.Optional;
 
 public class TermForm {
     public static void main(String[] args) {
         JFrame frame = new JFrame("TermForm");
-        frame.setContentPane(new TermForm().panel1);
+        frame.setContentPane(new TermForm(Optional.empty()).panel1);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setMinimumSize(new Dimension(630, 840));
         frame.setLocationRelativeTo(null);
@@ -15,16 +16,26 @@ public class TermForm {
         frame.setVisible(true);
     }
 
-    public TermForm() {
+    public static void openTermForm(Wrapper wrapper, Component relativeTo) {
+        JFrame frame = new JFrame("TermForm");
+        frame.setContentPane(new TermForm(Optional.ofNullable(wrapper)).panel1);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.setMinimumSize(new Dimension(630, 840));
+        frame.setLocationRelativeTo(relativeTo);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public TermForm(Optional<Wrapper> wrapper) {
         System.setProperty("java.util.logging.SimpleFormatter.format",
                 "%4$s: %5$s%6$s%n");
         try {
-            wrapper = new Wrapper();
-
+            w = wrapper.orElse(new Wrapper());
+            displayPane.setText(w.ascii());
 
             connectButton.addActionListener(e -> {
                 try {
-                    wrapper.connect("155.210.71.101:123");
+                    w.connect("155.210.71.101:123");
                     drawScreen();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -32,7 +43,7 @@ public class TermForm {
             });
             disconnectButton.addActionListener(e -> {
                 try {
-                    wrapper.disconnect();
+                    w.disconnect();
 
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -40,21 +51,21 @@ public class TermForm {
             });
             exitButton.addActionListener(e -> {
                 try {
-                    wrapper.pf(3);
-                    wrapper.pf(3);
-                    wrapper.pf(3);
-                    wrapper.string("e\\n");
-                    wrapper.enter();
-                    wrapper.pf(3);
-                    wrapper.exit();
+                    w.pf(3);
+                    w.pf(3);
+                    w.pf(3);
+                    w.string("e\\n");
+                    w.enter();
+                    w.pf(3);
+                    w.disconnect();
                     System.exit(0);
-                } catch (IOException ex) {
+                } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
             });
             enterButton.addActionListener(e -> {
                 try {
-                    wrapper.enter();
+                    w.enter();
                     drawScreen();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -62,7 +73,7 @@ public class TermForm {
             });
             tabButton.addActionListener(e -> {
                 try {
-                    wrapper.tab();
+                    w.tab();
                     drawScreen();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -70,7 +81,7 @@ public class TermForm {
             });
             f3Button.addActionListener(e -> {
                 try {
-                    wrapper.string("\\pf3");
+                    w.string("\\pf3");
                     drawScreen();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -78,7 +89,7 @@ public class TermForm {
             });
             uTpButton.addActionListener(e -> {
                 try {
-                    wrapper.string("prog\\tprog123\\n");
+                    w.string("prog\\tprog123\\n");
                     drawScreen();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -86,7 +97,7 @@ public class TermForm {
             });
             stringButton.addActionListener(e -> {
                 try {
-                    wrapper.string(stringTextField.getText() + "\\n");
+                    w.string(stringTextField.getText() + "\\n");
                     drawScreen();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -94,15 +105,31 @@ public class TermForm {
             });
             asciiButton.addActionListener(e -> {
                 try {
-                    wrapper.waitSeconds(0.3);
-                    wrapper.ascii();
+                    w.waitSeconds(0.3);
+                    w.ascii();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
             });
             launchButton.addActionListener(e -> {
                 try {
-                    wrapper.string("\\nprog\\tprog123\\ntasks2.job\\n");
+                    // Login
+                    w.enter();
+                    w.waitSeconds(0.3);
+                    w.string("prog");
+                    w.tab();
+                    w.waitSeconds(0.3);
+                    w.string("prog123");
+                    w.enter();
+                    w.waitSeconds(0.3);
+                    w.enter();
+                    w.waitSeconds(0.3);
+
+                    // Open the program
+                    w.string("tasks2.job");
+                    w.enter();
+                    w.waitSeconds(0.3);
+
 
                     drawScreen();
                 } catch (IOException ex) {
@@ -116,13 +143,13 @@ public class TermForm {
 
     private void drawScreen() {
         try {
-            displayPane.setText(wrapper.waitAscii());
+            displayPane.setText(w.waitAscii());
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    private Wrapper wrapper;
+    private Wrapper w;
     private JPanel panel1;
     private JTextPane displayPane;
     private JButton enterButton;

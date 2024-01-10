@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.text.MaskFormatter;
 import javax.swing.text.NumberFormatter;
 import java.awt.event.*;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Optional;
 
@@ -16,8 +17,9 @@ public class AddTaskDialog extends JDialog {
     private JTextField descriptionField;
     private JFormattedTextField dateField;
 
-    public AddTaskDialog(@Nullable Task task) {
+    private Task task;
 
+    public AddTaskDialog(@Nullable Task task) {
         if (task != null) {
             numberField.setText(String.valueOf(task.number()));
             nameField.setText(task.name());
@@ -42,6 +44,7 @@ public class AddTaskDialog extends JDialog {
 
         // call onCancel() on ESCAPE
         contentPane.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        pack();
     }
 
 
@@ -49,7 +52,10 @@ public class AddTaskDialog extends JDialog {
         return !(numberField.getText().isBlank()
                 || nameField.getText().isBlank()
                 || descriptionField.getText().isBlank()
-                || dateField.getText().isBlank());
+                || dateField.getText().isBlank()
+                || nameField.getText().length() > 16
+                || descriptionField.getText().length() > 32
+        );
     }
 
     private void onOK() {
@@ -59,20 +65,20 @@ public class AddTaskDialog extends JDialog {
         // Else modal error and not close
 
         if (!validateTask()) {
-            JOptionPane.showMessageDialog(this.getRootPane(), "Validation of the inputs failed.\nMake sure all fields are full.", "Validation Failed", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this.getRootPane(), "Validation of the inputs failed.", "Validation Failed", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-
-        if (false) {
-            JOptionPane.showMessageDialog(this.getRootPane(), "Mainframe error", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
+        try {
+            task = new Task((Integer) numberField.getFormatter().stringToValue(numberField.getText()), nameField.getText(), descriptionField.getText(), dateField.getText());
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
-        dispose();
+        setVisible(false);
     }
 
     private void onCancel() {
         // Do nothing in the server
-        dispose();
+        setVisible(false);
     }
 
     public static void main(String[] args) {
@@ -84,6 +90,11 @@ public class AddTaskDialog extends JDialog {
 
     private void createUIComponents() {
         numberField = new JFormattedTextField(new NumberFormatter());
-        dateField = new JFormattedTextField(new SimpleDateFormat("dd-MM-yy"));
+        ((NumberFormatter) numberField.getFormatter()).setValueClass(Integer.class);
+        dateField = new JFormattedTextField(new SimpleDateFormat("dd MM yy"));
+    }
+
+    public @Nullable Task getTask() {
+        return task;
     }
 }

@@ -116,17 +116,16 @@ public class Wrapper {
         wait_(5, "output");
     }
 
-    
     public String ascii() throws IOException {
         int lines = 43;
         printfln("ascii");
         var sb = new StringBuilder();
-        sb.append("╔").append("═".repeat(80)).append("╗");
+        sb.append("╔").append("═".repeat(81)).append("╗\n");
         for (int i = 0; i < lines; i++) {
-            sb.append(reader.readLine().replace("data", "║"));
+            sb.append(reader.readLine().replace("data:", "║"));
             sb.append("║\n");
         }
-        sb.append("╚").append("═".repeat(80)).append("╝");
+        sb.append("╚").append("═".repeat(81)).append("╝");
         throw_if_not_ok("Couldn't ascii");
         return sb.toString();
     }
@@ -143,5 +142,11 @@ public class Wrapper {
         waitOutput();
         waitSeconds(0.5);
         return ascii();
+    }
+
+    public void stringEnterWait(String string) throws IOException {
+        this.string(string);
+        this.enter();
+        this.waitSeconds(0.3);
     }
 }

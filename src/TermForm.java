@@ -31,7 +31,7 @@ public class TermForm {
                 "%4$s: %5$s%6$s%n");
         try {
             w = wrapper.orElse(new Wrapper());
-            displayPane.setText(w.ascii());
+            w.ascii();
 
             connectButton.addActionListener(e -> {
                 try {
@@ -143,7 +143,21 @@ public class TermForm {
 
     private void drawScreen() {
         try {
-            displayPane.setText(w.waitAscii());
+            w.waitOutput();
+            w.waitSeconds(0.5);
+            var ascii = w.ascii().lines();
+            int lines = 43;
+
+            var sb = new StringBuilder();
+            sb.append("╔").append("═".repeat(82)).append("╗\n");
+            for (var line : ascii.toList()) {
+                sb.append("║ ");
+                sb.append(line);
+                sb.append(" ║\n");
+            }
+            sb.append("╚").append("═".repeat(82)).append("╝");
+
+            displayPane.setText(sb.toString());
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }

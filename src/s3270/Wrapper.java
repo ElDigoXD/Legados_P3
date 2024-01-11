@@ -1,7 +1,5 @@
 package s3270;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.*;
 import java.util.logging.*;
 
@@ -10,15 +8,12 @@ import static java.lang.String.format;
 public class Wrapper {
     private static final Logger LOGGER = Logger.getGlobal();
 
-    @NotNull
     Process process;
-    @NotNull
     PrintWriter writer;
-    @NotNull
     BufferedReader reader;
 
 
-    public Wrapper() throws Exception {
+    public Wrapper(String ws3270_path) throws IOException {
         LOGGER.setLevel(Level.ALL);
 
         var handler = new StreamHandler(System.out, new SimpleFormatter()) {
@@ -28,12 +23,12 @@ public class Wrapper {
                 flush();
             }
         };
-        handler.setLevel(Level.ALL);
+        handler.setLevel(Level.FINE);
         LOGGER.addHandler(handler);
 
 
         process = new ProcessBuilder()
-                .command("C:\\Program Files\\wc3270\\ws3270.exe")
+                .command(ws3270_path)
                 .start();
 
 
@@ -42,8 +37,12 @@ public class Wrapper {
         reader = process.inputReader();
     }
 
+    public Wrapper() throws IOException {
+        this("C:\\Program Files\\wc3270\\ws3270.exe");
+    }
 
-    private void printfln(@NotNull String formatStr, Object... args) {
+
+    private void printfln(String formatStr, Object... args) {
         writer.printf(formatStr + '\n', args);
         writer.flush();
         LOGGER.fine(format("Written '" + formatStr + "'", args).replace("\n", "\\n"));
@@ -54,7 +53,6 @@ public class Wrapper {
         LOGGER.finer(format("Ignored '%s'", line).replace("\n", "\\n"));
 
     }
-
 
     private String readLine() throws IOException {
 
@@ -70,42 +68,42 @@ public class Wrapper {
 
     public void connect(String s) throws IOException {
         printfln("connect(\"%s\")", s);
-        throw_if_not_ok(format("Couldn't connect(\"%s\")", s));
+        throwIfNotOk(format("Couldn't connect(\"%s\")", s));
     }
 
     public void exit() throws IOException {
         printfln("exit");
-        throw_if_not_ok("Couldn't exit");
+        throwIfNotOk("Couldn't exit");
     }
 
     public void disconnect() throws IOException {
         printfln("disconnect");
-        throw_if_not_ok("Couldn't disconnect");
+        throwIfNotOk("Couldn't disconnect");
     }
 
     public void string(String string) throws IOException {
         printfln("string(\"%s\")", string);
-        throw_if_not_ok(format("Couldn't use string(\"%s\")", string));
+        throwIfNotOk(format("Couldn't use string(\"%s\")", string));
     }
 
     public void enter() throws IOException {
         printfln("enter");
-        throw_if_not_ok("Couldn't enter");
+        throwIfNotOk("Couldn't enter");
     }
 
     public void tab() throws IOException {
         printfln("tab");
-        throw_if_not_ok("Couldn't tab");
+        throwIfNotOk("Couldn't tab");
     }
 
     public void pf(int fKey) throws IOException {
         printfln("pf(%s)", fKey);
-        throw_if_not_ok(format("Couldn't pf(%s)", fKey));
+        throwIfNotOk(format("Couldn't pf(%s)", fKey));
     }
 
     public void wait_(double seconds, String mode) throws IOException {
         printfln("wait(%s, %s)", seconds, mode);
-        throw_if_not_ok(format("Couldn't wait(%s, %s)", seconds, mode));
+        throwIfNotOk(format("Couldn't wait(%s, %s)", seconds, mode));
     }
 
     public void waitSeconds(double seconds) throws IOException {
@@ -120,17 +118,18 @@ public class Wrapper {
         int lines = 43;
         printfln("ascii");
         var sb = new StringBuilder();
-        sb.append("╔").append("═".repeat(81)).append("╗\n");
-        for (int i = 0; i < lines; i++) {
-            sb.append(reader.readLine().replace("data:", "║"));
-            sb.append("║\n");
+
+        for (int i = 0; i < lines - 1; i++) {
+            sb.append(reader.readLine().replace("data: ", ""));
+            sb.append("\n");
         }
-        sb.append("╚").append("═".repeat(81)).append("╝");
-        throw_if_not_ok("Couldn't ascii");
+        sb.append(reader.readLine().replace("data: ", ""));
+
+        throwIfNotOk("Couldn't ascii");
         return sb.toString();
     }
 
-    private void throw_if_not_ok(String message) throws IOException {
+    private void throwIfNotOk(String message) throws IOException {
         ignoreLine();
         if (!readLine().startsWith("ok")) {
             emptyReader();
@@ -145,8 +144,8 @@ public class Wrapper {
     }
 
     public void stringEnterWait(String string) throws IOException {
-        this.string(string);
-        this.enter();
-        this.waitSeconds(0.3);
+        string(string);
+        enter();
+        waitSeconds(0.3);
     }
 }

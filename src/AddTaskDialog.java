@@ -1,12 +1,10 @@
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.MaskFormatter;
 import javax.swing.text.NumberFormatter;
 import java.awt.event.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Optional;
 
 public class AddTaskDialog extends JDialog {
     private JPanel contentPane;
